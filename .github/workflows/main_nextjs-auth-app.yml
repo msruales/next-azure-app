@@ -1,0 +1,76 @@
+name: Build and deploy Node.js app to Azure Web App - nextjs-auth-app
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build --if-present
+
+      - name: Prepare zip for deployment
+        run: |
+          mkdir app
+          mv * app || true
+          cd app && zip -r ../release.zip . -x ".git/*" "node_modules/*" ".next/*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Unzip artifact
+        run: unzip release.zip
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_070312ADC2114EDC9E660A7E240CBBDC }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3AD3F7F8B7E44248BDFEE9CB4EA71923 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1923AF4376A64785A34C0633C94041D5 }}
+          
+      - name: Cleanup previous deployment
+        run: rm -rf /tmp/zipdeploy
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'nextjs-auth-app'
+          slot-name: 'Production'
+          package: .
