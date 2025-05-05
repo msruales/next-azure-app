@@ -60,10 +60,10 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_070312ADC2114EDC9E660A7E240CBBDC }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3AD3F7F8B7E44248BDFEE9CB4EA71923 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1923AF4376A64785A34C0633C94041D5 }}
+          
       - name: Cleanup previous deployment
         run: rm -rf /tmp/zipdeploy
 
